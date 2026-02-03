@@ -5,28 +5,33 @@ Flask backend for the SPYCO Purchase Order system.
 ## Setup
 
 1. Create a virtual environment:
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 2. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Set up environment variables:
+
 ```bash
 cp .env.example .env
 # Edit .env with your database credentials
 ```
 
 4. Create the PostgreSQL database:
+
 ```bash
 createdb spyco_po
 ```
 
 5. Run the server:
+
 ```bash
 python app.py
 ```
@@ -59,12 +64,14 @@ with app.app_context():
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
 - `GET /api/auth/check-login` - Check login status
 - `POST /api/auth/change-password` - Change password
 
 ### Purchase Orders
+
 - `GET /api/po/` - List POs
 - `POST /api/po/` - Create PO
 - `GET /api/po/<id>` - Get PO
@@ -75,6 +82,7 @@ with app.app_context():
 - `POST /api/po/<id>/reject` - Reject PO
 
 ### Lookup (for combo boxes)
+
 - `GET /api/lookup/vendors/search` - Search vendors
 - `POST /api/lookup/vendors` - Quick create vendor
 - `GET /api/lookup/units/search` - Search units
@@ -82,6 +90,7 @@ with app.app_context():
 - `GET /api/lookup/departments` - List departments
 
 ### Admin (requires admin privileges)
+
 - CRUD `/api/admin/departments`
 - CRUD `/api/admin/users`
 - CRUD `/api/admin/vendors`

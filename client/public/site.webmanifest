@@ -1,0 +1,22 @@
+{
+  "name": "SPYCO PO System",
+  "short_name": "SPYCO",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#e85d04",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}

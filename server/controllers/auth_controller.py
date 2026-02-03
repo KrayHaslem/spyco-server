@@ -32,13 +32,14 @@ def login():
         "user": user.to_dict(include_department=True),
     }))
 
+    # 2^31 - 1 seconds (~68 years) - practical max for cookie compatibility (32-bit)
     response.set_cookie(
         "token",
         token,
         httponly=True,
         secure=False,  # Set to True in production with HTTPS
         samesite="Lax",
-        max_age=60 * 60 * 24 * 7,  # 7 days
+        max_age=2**31 - 1,
     )
 
     return response

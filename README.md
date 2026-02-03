@@ -74,7 +74,9 @@ cd client && npm run build
 cd ../server && python app.py
 ```
 
-Access the app at `http://localhost:5000` (Flask serving everything).
+Access the app at `http://localhost:5001` (Flask serving everything).
+
+> **Note:** Port 5001 is used instead of 5000 because macOS AirPlay Receiver uses port 5000.
 
 ## Heroku Deployment
 
