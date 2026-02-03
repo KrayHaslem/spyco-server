@@ -145,6 +145,9 @@ def create_app():
     return app
 
 
+# Create the app instance for gunicorn (production)
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
+    # For local development, the app is already created above
     app.run(debug=True, port=5001)
