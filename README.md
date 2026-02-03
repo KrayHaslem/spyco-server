@@ -22,7 +22,7 @@ spyco-server/
 - Node.js 20.x
 - PostgreSQL
 
-### Setup
+### Initial Setup
 
 1. Install Python dependencies:
 
@@ -33,7 +33,7 @@ spyco-server/
 2. Install client dependencies:
 
    ```bash
-   cd client && npm install
+   cd client && rm -rf node_modules && npm install
    ```
 
 3. Create `.env` file in the `server/` directory (copy from `.env.example`):
@@ -42,16 +42,39 @@ spyco-server/
    cp .env.example server/.env
    ```
 
-4. Start the Flask API (from root):
+   Then edit `server/.env` with your database credentials and JWT secret.
 
-   ```bash
-   cd server && python app.py
-   ```
+### Option A: Development Mode (Separate Servers)
 
-5. Start the React dev server (in another terminal):
-   ```bash
-   cd client && npm run dev
-   ```
+Run the client and API as separate processes with hot-reloading. The Vite dev server proxies API requests to Flask.
+
+**Terminal 1 - Flask API:**
+
+```bash
+cd server && python app.py
+```
+
+**Terminal 2 - React Dev Server:**
+
+```bash
+cd client && npm run dev
+```
+
+Access the app at `http://localhost:5173` (Vite dev server with hot-reload).
+
+### Option B: Production-Like Mode (Single Server)
+
+Build the React client and have Flask serve everything from a single server. This mimics the Heroku production environment.
+
+```bash
+# Build the React client
+cd client && npm run build
+
+# Start Flask (serves both static files and API)
+cd ../server && python app.py
+```
+
+Access the app at `http://localhost:5000` (Flask serving everything).
 
 ## Heroku Deployment
 
