@@ -89,7 +89,11 @@ def create_app():
         static_url_path=''
     )
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+    # Fix Heroku's postgres:// URL scheme (SQLAlchemy 1.4+ requires postgresql://)
+    database_url = os.getenv("DATABASE_URL")
+    if database_url and database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
     app.config["JWT_ALGORITHM"] = os.getenv("JWT_ALGORITHM", "HS256")
