@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Spyco PO System - Flask API serving React client",
   "scripts": {
-    "build": "cd client && npm install && npm run build",
+    "build": "cd client && npm install --include=dev && npm run build",
     "heroku-postbuild": "npm run build"
   },
   "engines": {
