@@ -55,8 +55,19 @@ function AllOrdersPage() {
         api.admin.getUsers(),
         api.admin.getVendors(),
       ]);
-      if (usersRes.data) setUsers(usersRes.data as User[]);
-      if (vendorsRes.data) setVendors(vendorsRes.data as Vendor[]);
+      // Handle paginated response format
+      if (usersRes.data) {
+        const userData = (usersRes.data as { data?: User[] }).data;
+        if (Array.isArray(userData)) {
+          setUsers(userData);
+        }
+      }
+      if (vendorsRes.data) {
+        const vendorData = (vendorsRes.data as { data?: Vendor[] }).data;
+        if (Array.isArray(vendorData)) {
+          setVendors(vendorData);
+        }
+      }
     }
   }, [user?.is_admin]);
 

@@ -5,6 +5,12 @@ interface ApiResponse<T> {
   error?: string;
 }
 
+function buildQueryString(params?: URLSearchParams): string {
+  if (!params) return "";
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
 async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -132,7 +138,8 @@ export const api = {
     apiCall(`/repair/${id}/complete`, { method: "POST" }),
 
   // PO Groups
-  getPOGroups: () => apiCall("/po-group/"),
+  getPOGroups: (params?: URLSearchParams) =>
+    apiCall(`/po-group/${buildQueryString(params)}`),
   getPOGroup: (id: string) => apiCall(`/po-group/${id}`),
   createPOGroup: (poNumber: string) =>
     apiCall("/po-group/", {
@@ -201,7 +208,8 @@ export const api = {
       apiCall(`/admin/departments/${id}`, { method: "DELETE" }),
 
     // Users
-    getUsers: () => apiCall("/admin/users"),
+    getUsers: (params?: URLSearchParams) =>
+      apiCall(`/admin/users${buildQueryString(params)}`),
     getUser: (id: string) => apiCall(`/admin/users/${id}`),
     createUser: (data: unknown) =>
       apiCall("/admin/users", { method: "POST", body: JSON.stringify(data) }),
@@ -214,7 +222,8 @@ export const api = {
       apiCall(`/admin/users/${id}`, { method: "DELETE" }),
 
     // Vendors
-    getVendors: () => apiCall("/admin/vendors"),
+    getVendors: (params?: URLSearchParams) =>
+      apiCall(`/admin/vendors${buildQueryString(params)}`),
     getVendor: (id: string) => apiCall(`/admin/vendors/${id}`),
     createVendor: (data: unknown) =>
       apiCall("/admin/vendors", { method: "POST", body: JSON.stringify(data) }),
@@ -227,7 +236,8 @@ export const api = {
       apiCall(`/admin/vendors/${id}`, { method: "DELETE" }),
 
     // Units
-    getUnits: () => apiCall("/admin/units"),
+    getUnits: (params?: URLSearchParams) =>
+      apiCall(`/admin/units${buildQueryString(params)}`),
     getUnit: (id: string) => apiCall(`/admin/units/${id}`),
     getUnitTypes: () => apiCall("/admin/unit-types"),
     createUnit: (data: unknown) =>

@@ -1082,3 +1082,175 @@ body {
     flex: 1;
   }
 }
+
+// Table Controls (Search, Filter)
+.table-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid $gray-200;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+// Search Input
+.search-input {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+
+  &__icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    color: $gray-400;
+    pointer-events: none;
+  }
+
+  &__field {
+    width: 100%;
+    padding: 0.5rem 2rem 0.5rem 2.25rem;
+    font-size: 0.875rem;
+    border: 1px solid $gray-300;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    }
+
+    &::placeholder {
+      color: $gray-400;
+    }
+  }
+
+  &__clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.25rem;
+    background: none;
+    border: none;
+    color: $gray-400;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 0.25rem;
+
+    &:hover {
+      color: $gray-600;
+      background: $gray-100;
+    }
+  }
+}
+
+// Filter Dropdown
+.filter-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
+
+  @media (max-width: 768px) {
+    min-width: 100%;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $gray-600;
+  }
+
+  &__select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid $gray-300;
+    border-radius: 0.375rem;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    }
+  }
+}
+
+// Sortable Table Header
+.table__header--sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: $gray-100;
+  }
+}
+
+.table__header-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: $gray-700;
+  }
+
+  &--inactive svg {
+    color: $gray-400;
+  }
+}
+
+// Pagination
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid $gray-200;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__info {
+    font-size: 0.875rem;
+    color: $gray-500;
+  }
+
+  &__controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+}

@@ -4,13 +4,50 @@ from models.po_group import POGroup
 from models.order import Order, OrderStatus
 
 
+# Default pagination settings
+DEFAULT_PER_PAGE = 10
+
+
 def get_po_groups(current_user):
-    """Get all PO Groups (admin only)."""
+    """Get all PO Groups with search, sort, and pagination (admin only)."""
     if not current_user.is_admin:
         return jsonify({"error": "Access denied"}), 403
 
-    po_groups = POGroup.query.order_by(POGroup.created_at.desc()).all()
-    return jsonify([pg.to_dict() for pg in po_groups])
+    query = POGroup.query
+
+    # Search
+    search = request.args.get("search", "").strip()
+    if search:
+        query = query.filter(POGroup.po_number.ilike(f"%{search}%"))
+
+    # Sorting
+    sort_by = request.args.get("sort_by", "created_at")
+    sort_dir = request.args.get("sort_dir", "desc")
+
+    sort_columns = {
+        "po_number": POGroup.po_number,
+        "created_at": POGroup.created_at,
+    }
+
+    column = sort_columns.get(sort_by, POGroup.created_at)
+    if sort_dir == "desc":
+        query = query.order_by(column.desc())
+    else:
+        query = query.order_by(column.asc())
+
+    # Pagination
+    page = request.args.get("page", 1, type=int)
+    per_page = DEFAULT_PER_PAGE
+    total = query.count()
+    po_groups = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        "data": [pg.to_dict() for pg in po_groups],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page if total > 0 else 1
+    })
 
 
 def get_po_group(po_group_id, current_user):

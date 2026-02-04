@@ -60,8 +60,7 @@ def setup_logging(app):
     app.logger.addHandler(file_handler)
     app.logger.setLevel(log_level)
 
-# Fixed UUID for the Repairs department to ensure consistency
-REPAIRS_DEPARTMENT_ID = "00000000-0000-0000-0000-000000000001"
+from constants import REPAIRS_DEPARTMENT_ID
 
 
 def seed_repairs_department():

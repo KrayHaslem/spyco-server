@@ -6,7 +6,7 @@ from models.repair_item import RepairItem
 from models.approver import Approver
 from models.technician import Technician
 from models.unit import Unit
-from app import REPAIRS_DEPARTMENT_ID
+from constants import REPAIRS_DEPARTMENT_ID
 from lib.sms_service import notify_repair_pending, notify_repair_approved, notify_repair_completed
 
 

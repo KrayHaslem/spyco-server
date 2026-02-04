@@ -24,8 +24,13 @@ function TechniciansPage() {
     ]);
     if (techniciansRes.data)
       setTechnicians(techniciansRes.data as Technician[]);
-    if (usersRes.data)
-      setUsers((usersRes.data as User[]).filter((u) => u.is_active));
+    // Handle paginated response format for users
+    if (usersRes.data) {
+      const userData = (usersRes.data as { data?: User[] }).data;
+      if (Array.isArray(userData)) {
+        setUsers(userData.filter((u) => u.is_active));
+      }
+    }
     setIsLoading(false);
   };
 

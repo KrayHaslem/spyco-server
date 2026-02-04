@@ -54,8 +54,19 @@ function AllRepairsPage() {
         api.admin.getUsers(),
         api.admin.getUnits(),
       ]);
-      if (usersRes.data) setUsers(usersRes.data as User[]);
-      if (unitsRes.data) setUnits(unitsRes.data as Unit[]);
+      // Handle paginated response format
+      if (usersRes.data) {
+        const userData = (usersRes.data as { data?: User[] }).data;
+        if (Array.isArray(userData)) {
+          setUsers(userData);
+        }
+      }
+      if (unitsRes.data) {
+        const unitData = (unitsRes.data as { data?: Unit[] }).data;
+        if (Array.isArray(unitData)) {
+          setUnits(unitData);
+        }
+      }
     }
   }, [user?.is_admin]);
 

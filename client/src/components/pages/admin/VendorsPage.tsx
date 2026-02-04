@@ -1,27 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { api } from "../../../utils/api";
-import type { Vendor } from "../../../types";
+import { useTableFeatures } from "../../../hooks/useTableFeatures";
+import SearchInput from "../../core/SearchInput";
+import FilterDropdown from "../../core/FilterDropdown";
+import SortableHeader from "../../core/SortableHeader";
+import Pagination from "../../core/Pagination";
+import type { Vendor, PaginatedResponse } from "../../../types";
 
 function VendorsPage() {
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [formData, setFormData] = useState({ name: "", contact_info: "" });
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadVendors();
+  const fetchVendors = useCallback(async (params: URLSearchParams) => {
+    return api.admin.getVendors(params) as Promise<{
+      data?: PaginatedResponse<Vendor>;
+      error?: string;
+    }>;
   }, []);
 
-  const loadVendors = async () => {
-    setIsLoading(true);
-    const response = await api.admin.getVendors();
-    if (response.data) {
-      setVendors(response.data as Vendor[]);
-    }
-    setIsLoading(false);
-  };
+  const {
+    data: vendors,
+    isLoading,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    sort,
+    setSort,
+    pagination,
+    setPage,
+    refresh,
+  } = useTableFeatures<Vendor>(fetchVendors, {
+    defaultSort: { column: "name", direction: "asc" },
+  });
 
   const openCreateModal = () => {
     setEditingVendor(null);
@@ -32,7 +45,10 @@ function VendorsPage() {
 
   const openEditModal = (vendor: Vendor) => {
     setEditingVendor(vendor);
-    setFormData({ name: vendor.name, contact_info: vendor.contact_info || "" });
+    setFormData({
+      name: vendor.name,
+      contact_info: vendor.contact_info || "",
+    });
     setError("");
     setShowModal(true);
   };
@@ -60,7 +76,7 @@ function VendorsPage() {
     }
 
     setShowModal(false);
-    loadVendors();
+    refresh();
   };
 
   const handleDelete = async (id: string) => {
@@ -71,7 +87,7 @@ function VendorsPage() {
       alert(response.error);
       return;
     }
-    loadVendors();
+    refresh();
   };
 
   const handleReactivate = async (id: string) => {
@@ -82,8 +98,13 @@ function VendorsPage() {
       alert(response.error);
       return;
     }
-    loadVendors();
+    refresh();
   };
+
+  const statusOptions = [
+    { value: "true", label: "Active" },
+    { value: "false", label: "Inactive" },
+  ];
 
   return (
     <div>
@@ -95,73 +116,105 @@ function VendorsPage() {
           </button>
         </div>
 
+        <div className="table-controls">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search vendors..."
+          />
+          <FilterDropdown
+            label="Status"
+            value={filters.is_active || ""}
+            options={statusOptions}
+            onChange={(value) => setFilter("is_active", value)}
+          />
+        </div>
+
         {isLoading ? (
           <div className="loading">Loading...</div>
         ) : vendors.length === 0 ? (
           <div className="empty-state">
-            <p className="empty-state__title">No vendors yet</p>
+            <p className="empty-state__title">No vendors found</p>
           </div>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Contact Info</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vendors.map((vendor) => (
-                <tr key={vendor.id}>
-                  <td>{vendor.name}</td>
-                  <td
-                    style={{
-                      maxWidth: "300px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {vendor.contact_info || "-"}
-                  </td>
-                  <td>
-                    <span
-                      className={`status-badge status-badge--${
-                        vendor.is_active ? "approved" : "rejected"
-                      }`}
-                    >
-                      {vendor.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn--link btn--sm"
-                      onClick={() => openEditModal(vendor)}
-                    >
-                      Edit
-                    </button>
-                    {vendor.is_active ? (
-                      <button
-                        className="btn btn--link btn--sm"
-                        style={{ color: "#dc2626" }}
-                        onClick={() => handleDelete(vendor.id)}
-                      >
-                        Deactivate
-                      </button>
-                    ) : (
-                      <button
-                        className="btn btn--link btn--sm"
-                        style={{ color: "#16a34a" }}
-                        onClick={() => handleReactivate(vendor.id)}
-                      >
-                        Reactivate
-                      </button>
-                    )}
-                  </td>
+          <>
+            <table className="table">
+              <thead>
+                <tr>
+                  <SortableHeader
+                    column="name"
+                    label="Name"
+                    sort={sort}
+                    onSort={setSort}
+                  />
+                  <SortableHeader
+                    column="contact_info"
+                    label="Contact Info"
+                    sort={sort}
+                    onSort={setSort}
+                  />
+                  <SortableHeader
+                    column="is_active"
+                    label="Status"
+                    sort={sort}
+                    onSort={setSort}
+                  />
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {vendors.map((vendor) => (
+                  <tr key={vendor.id}>
+                    <td>{vendor.name}</td>
+                    <td
+                      style={{
+                        maxWidth: "300px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {vendor.contact_info || "-"}
+                    </td>
+                    <td>
+                      <span
+                        className={`status-badge status-badge--${
+                          vendor.is_active ? "approved" : "rejected"
+                        }`}
+                      >
+                        {vendor.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn--link btn--sm"
+                        onClick={() => openEditModal(vendor)}
+                      >
+                        Edit
+                      </button>
+                      {vendor.is_active ? (
+                        <button
+                          className="btn btn--link btn--sm"
+                          style={{ color: "#dc2626" }}
+                          onClick={() => handleDelete(vendor.id)}
+                        >
+                          Deactivate
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn--link btn--sm"
+                          style={{ color: "#16a34a" }}
+                          onClick={() => handleReactivate(vendor.id)}
+                        >
+                          Reactivate
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination pagination={pagination} onPageChange={setPage} />
+          </>
         )}
       </div>
 

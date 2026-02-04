@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { api } from "../../../utils/api";
-import type { User, Department } from "../../../types";
+import { useTableFeatures } from "../../../hooks/useTableFeatures";
+import SearchInput from "../../core/SearchInput";
+import FilterDropdown from "../../core/FilterDropdown";
+import SortableHeader from "../../core/SortableHeader";
+import Pagination from "../../core/Pagination";
 import PasswordInput from "../../core/PasswordInput";
+import type { User, Department, PaginatedResponse } from "../../../types";
 
 function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -21,19 +24,38 @@ function UsersPage() {
   });
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadData();
+  const fetchUsers = useCallback(async (params: URLSearchParams) => {
+    return api.admin.getUsers(params) as Promise<{
+      data?: PaginatedResponse<User>;
+      error?: string;
+    }>;
   }, []);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    const [usersRes, deptsRes] = await Promise.all([
-      api.admin.getUsers(),
-      api.admin.getDepartments(),
-    ]);
-    if (usersRes.data) setUsers(usersRes.data as User[]);
-    if (deptsRes.data) setDepartments(deptsRes.data as Department[]);
-    setIsLoading(false);
+  const {
+    data: users,
+    isLoading,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    sort,
+    setSort,
+    pagination,
+    setPage,
+    refresh,
+  } = useTableFeatures<User>(fetchUsers, {
+    defaultSort: { column: "name", direction: "asc" },
+  });
+
+  useEffect(() => {
+    loadDepartments();
+  }, []);
+
+  const loadDepartments = async () => {
+    const response = await api.admin.getDepartments();
+    if (response.data) {
+      setDepartments(response.data as Department[]);
+    }
   };
 
   const openCreateModal = () => {
@@ -88,7 +110,7 @@ function UsersPage() {
     }
 
     setShowModal(false);
-    loadData();
+    refresh();
   };
 
   const handleDelete = async (id: string) => {
@@ -99,7 +121,7 @@ function UsersPage() {
       alert(response.error);
       return;
     }
-    loadData();
+    refresh();
   };
 
   const handleReactivate = async (id: string) => {
@@ -110,8 +132,23 @@ function UsersPage() {
       alert(response.error);
       return;
     }
-    loadData();
+    refresh();
   };
+
+  const statusOptions = [
+    { value: "true", label: "Active" },
+    { value: "false", label: "Inactive" },
+  ];
+
+  const roleOptions = [
+    { value: "admin", label: "Admin" },
+    { value: "approver", label: "Approver" },
+  ];
+
+  const departmentOptions = departments.map((dept) => ({
+    value: dept.id,
+    label: dept.name,
+  }));
 
   return (
     <div>
@@ -123,84 +160,128 @@ function UsersPage() {
           </button>
         </div>
 
+        <div className="table-controls">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search users..."
+          />
+          <FilterDropdown
+            label="Status"
+            value={filters.is_active || ""}
+            options={statusOptions}
+            onChange={(value) => setFilter("is_active", value)}
+          />
+          <FilterDropdown
+            label="Department"
+            value={filters.department_id || ""}
+            options={departmentOptions}
+            onChange={(value) => setFilter("department_id", value)}
+          />
+          <FilterDropdown
+            label="Role"
+            value={filters.role || ""}
+            options={roleOptions}
+            onChange={(value) => setFilter("role", value)}
+          />
+        </div>
+
         {isLoading ? (
           <div className="loading">Loading...</div>
         ) : users.length === 0 ? (
           <div className="empty-state">
-            <p className="empty-state__title">No users yet</p>
+            <p className="empty-state__title">No users found</p>
           </div>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.full_name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.department?.name || "-"}</td>
-                  <td>
-                    {user.is_admin && (
-                      <span className="status-badge status-badge--pending">
-                        Admin
-                      </span>
-                    )}
-                    {user.is_approver && (
-                      <span
-                        className="status-badge status-badge--approved"
-                        style={{ marginLeft: "0.25rem" }}
-                      >
-                        Approver
-                      </span>
-                    )}
-                    {!user.is_admin && !user.is_approver && "-"}
-                  </td>
-                  <td>
-                    <span
-                      className={`status-badge status-badge--${
-                        user.is_active ? "approved" : "rejected"
-                      }`}
-                    >
-                      {user.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn--link btn--sm"
-                      onClick={() => openEditModal(user)}
-                    >
-                      Edit
-                    </button>
-                    {user.is_active ? (
-                      <button
-                        className="btn btn--link btn--sm"
-                        style={{ color: "#dc2626" }}
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        Deactivate
-                      </button>
-                    ) : (
-                      <button
-                        className="btn btn--link btn--sm"
-                        style={{ color: "#16a34a" }}
-                        onClick={() => handleReactivate(user.id)}
-                      >
-                        Reactivate
-                      </button>
-                    )}
-                  </td>
+          <>
+            <table className="table">
+              <thead>
+                <tr>
+                  <SortableHeader
+                    column="name"
+                    label="Name"
+                    sort={sort}
+                    onSort={setSort}
+                  />
+                  <SortableHeader
+                    column="email"
+                    label="Email"
+                    sort={sort}
+                    onSort={setSort}
+                  />
+                  <th>Department</th>
+                  <th>Role</th>
+                  <SortableHeader
+                    column="is_active"
+                    label="Status"
+                    sort={sort}
+                    onSort={setSort}
+                  />
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.full_name}</td>
+                    <td>{user.email}</td>
+                    <td>{user.department?.name || "-"}</td>
+                    <td>
+                      {user.is_admin && (
+                        <span className="status-badge status-badge--pending">
+                          Admin
+                        </span>
+                      )}
+                      {user.is_approver && (
+                        <span
+                          className="status-badge status-badge--approved"
+                          style={{ marginLeft: user.is_admin ? "0.25rem" : 0 }}
+                        >
+                          Approver
+                        </span>
+                      )}
+                      {!user.is_admin && !user.is_approver && "-"}
+                    </td>
+                    <td>
+                      <span
+                        className={`status-badge status-badge--${
+                          user.is_active ? "approved" : "rejected"
+                        }`}
+                      >
+                        {user.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn--link btn--sm"
+                        onClick={() => openEditModal(user)}
+                      >
+                        Edit
+                      </button>
+                      {user.is_active ? (
+                        <button
+                          className="btn btn--link btn--sm"
+                          style={{ color: "#dc2626" }}
+                          onClick={() => handleDelete(user.id)}
+                        >
+                          Deactivate
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn--link btn--sm"
+                          style={{ color: "#16a34a" }}
+                          onClick={() => handleReactivate(user.id)}
+                        >
+                          Reactivate
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination pagination={pagination} onPageChange={setPage} />
+          </>
         )}
       </div>
 
@@ -241,7 +322,9 @@ function UsersPage() {
               </div>
               <PasswordInput
                 label={
-                  <>Password {editingUser && "(leave blank to keep current)"}</>
+                  <>
+                    Password {editingUser && "(leave blank to keep current)"}
+                  </>
                 }
                 value={formData.password}
                 onChange={(e) =>

@@ -1,4 +1,5 @@
 from flask import request, jsonify
+from sqlalchemy import or_
 from db import db
 from models.department import Department
 from models.user import User
@@ -8,6 +9,10 @@ from models.approver import Approver
 from models.approver_department import ApproverDepartment
 from models.technician import Technician
 from lib.phone_utils import format_us_phone
+
+
+# Default pagination settings
+DEFAULT_PER_PAGE = 10
 
 
 # ============== DEPARTMENTS ==============
@@ -92,9 +97,68 @@ def delete_department(department_id, current_user):
 # ============== USERS ==============
 
 def get_users():
-    """Get all users."""
-    users = User.query.order_by(User.last_name, User.first_name).all()
-    return jsonify([u.to_dict(include_department=True) for u in users])
+    """Get all users with search, filter, sort, and pagination."""
+    query = User.query
+
+    # Search
+    search = request.args.get("search", "").strip()
+    if search:
+        search_filter = or_(
+            User.first_name.ilike(f"%{search}%"),
+            User.last_name.ilike(f"%{search}%"),
+            User.email.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+
+    # Filters
+    is_active = request.args.get("is_active")
+    if is_active is not None and is_active != "":
+        query = query.filter(User.is_active == (is_active == "true"))
+
+    department_id = request.args.get("department_id")
+    if department_id:
+        query = query.filter(User.department_id == department_id)
+
+    role = request.args.get("role")
+    if role == "admin":
+        query = query.filter(User.is_admin == True)
+    elif role == "approver":
+        approver_user_ids = db.session.query(Approver.user_id).filter(Approver.is_active == True)
+        query = query.filter(User.id.in_(approver_user_ids))
+
+    # Sorting
+    sort_by = request.args.get("sort_by", "last_name")
+    sort_dir = request.args.get("sort_dir", "asc")
+
+    sort_columns = {
+        "name": [User.last_name, User.first_name],
+        "last_name": [User.last_name, User.first_name],
+        "first_name": [User.first_name, User.last_name],
+        "email": [User.email],
+        "is_active": [User.is_active],
+        "created_at": [User.created_at],
+    }
+
+    columns = sort_columns.get(sort_by, [User.last_name, User.first_name])
+    for col in columns:
+        if sort_dir == "desc":
+            query = query.order_by(col.desc())
+        else:
+            query = query.order_by(col.asc())
+
+    # Pagination
+    page = request.args.get("page", 1, type=int)
+    per_page = DEFAULT_PER_PAGE
+    total = query.count()
+    users = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        "data": [u.to_dict(include_department=True) for u in users],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page if total > 0 else 1
+    })
 
 
 def get_user(user_id):
@@ -214,9 +278,53 @@ def delete_user(user_id, current_user):
 # ============== VENDORS ==============
 
 def get_vendors():
-    """Get all vendors."""
-    vendors = Vendor.query.order_by(Vendor.name).all()
-    return jsonify([v.to_dict() for v in vendors])
+    """Get all vendors with search, filter, sort, and pagination."""
+    query = Vendor.query
+
+    # Search
+    search = request.args.get("search", "").strip()
+    if search:
+        search_filter = or_(
+            Vendor.name.ilike(f"%{search}%"),
+            Vendor.contact_info.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+
+    # Filters
+    is_active = request.args.get("is_active")
+    if is_active is not None and is_active != "":
+        query = query.filter(Vendor.is_active == (is_active == "true"))
+
+    # Sorting
+    sort_by = request.args.get("sort_by", "name")
+    sort_dir = request.args.get("sort_dir", "asc")
+
+    sort_columns = {
+        "name": Vendor.name,
+        "contact_info": Vendor.contact_info,
+        "is_active": Vendor.is_active,
+        "created_at": Vendor.created_at,
+    }
+
+    column = sort_columns.get(sort_by, Vendor.name)
+    if sort_dir == "desc":
+        query = query.order_by(column.desc())
+    else:
+        query = query.order_by(column.asc())
+
+    # Pagination
+    page = request.args.get("page", 1, type=int)
+    per_page = DEFAULT_PER_PAGE
+    total = query.count()
+    vendors = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        "data": [v.to_dict() for v in vendors],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page if total > 0 else 1
+    })
 
 
 def get_vendor(vendor_id):
@@ -282,9 +390,62 @@ def delete_vendor(vendor_id, current_user):
 # ============== UNITS ==============
 
 def get_units():
-    """Get all units."""
-    units = Unit.query.order_by(Unit.unit_number).all()
-    return jsonify([u.to_dict(include_department=True) for u in units])
+    """Get all units with search, filter, sort, and pagination."""
+    query = Unit.query
+
+    # Search
+    search = request.args.get("search", "").strip()
+    if search:
+        search_filter = or_(
+            Unit.unit_number.ilike(f"%{search}%"),
+            Unit.description.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+
+    # Filters
+    is_active = request.args.get("is_active")
+    if is_active is not None and is_active != "":
+        query = query.filter(Unit.is_active == (is_active == "true"))
+
+    unit_type = request.args.get("unit_type")
+    if unit_type:
+        query = query.filter(Unit.unit_type == unit_type)
+
+    department_id = request.args.get("department_id")
+    if department_id:
+        query = query.filter(Unit.department_id == department_id)
+
+    # Sorting
+    sort_by = request.args.get("sort_by", "unit_number")
+    sort_dir = request.args.get("sort_dir", "asc")
+
+    sort_columns = {
+        "unit_number": Unit.unit_number,
+        "description": Unit.description,
+        "unit_type": Unit.unit_type,
+        "is_active": Unit.is_active,
+        "created_at": Unit.created_at,
+    }
+
+    column = sort_columns.get(sort_by, Unit.unit_number)
+    if sort_dir == "desc":
+        query = query.order_by(column.desc())
+    else:
+        query = query.order_by(column.asc())
+
+    # Pagination
+    page = request.args.get("page", 1, type=int)
+    per_page = DEFAULT_PER_PAGE
+    total = query.count()
+    units = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        "data": [u.to_dict(include_department=True) for u in units],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page if total > 0 else 1
+    })
 
 
 def get_unit(unit_id):
@@ -319,7 +480,7 @@ def create_unit(current_user):
         unit_number=data["unit_number"],
         description=data.get("description"),
         unit_type=unit_type,
-        department_id=data.get("department_id"),
+        department_id=data.get("department_id") or None,
         is_active=data.get("is_active", True),
         created_by_id=current_user.id,
     )
