@@ -210,7 +210,7 @@ def notify_order_pending(order, approvers: list, submitter_name: str):
             phone = approver.user.phone
             message = (
                 f"New order {order.order_number} pending approval from {submitter_name}. "
-                f"{config['client_url']}/orders/{order.id}"
+                f"{config['client_url']}/order/{order.id}"
             )
             recipients.append({
                 "to": phone,
@@ -237,7 +237,7 @@ def notify_repair_pending(repair, approvers: list, submitter_name: str):
         if approver.user and approver.user.phone:
             message = (
                 f"New repair {repair.repair_number} pending approval from {submitter_name}. "
-                f"{config['client_url']}/repairs/{repair.id}"
+                f"{config['client_url']}/repair/{repair.id}"
             )
             recipients.append({
                 "to": approver.user.phone,
@@ -263,7 +263,7 @@ def notify_order_approved(order, admins: list):
         if admin.phone:
             message = (
                 f"Order {order.order_number} has been approved. "
-                f"{config['client_url']}/orders/{order.id}"
+                f"{config['client_url']}/order/{order.id}"
             )
             recipients.append({
                 "to": admin.phone,
@@ -289,7 +289,7 @@ def notify_repair_approved(repair, technicians: list):
         if technician.user and technician.user.phone:
             message = (
                 f"Repair {repair.repair_number} approved and ready for completion. "
-                f"{config['client_url']}/repairs/{repair.id}"
+                f"{config['client_url']}/repair/{repair.id}"
             )
             recipients.append({
                 "to": technician.user.phone,
@@ -319,7 +319,7 @@ def notify_order_paid(order, user):
     message = (
         f"Your order from {vendor_name} has been paid. "
         f"PO#: {po_number}. "
-        f"{config['client_url']}/orders/{order.id}"
+        f"{config['client_url']}/order/{order.id}"
     )
     
     send_sms(user.phone, message)
@@ -340,7 +340,7 @@ def notify_repair_completed(repair, user):
     
     message = (
         f"Your repair {repair.repair_number} has been marked complete. "
-        f"{config['client_url']}/repairs/{repair.id}"
+        f"{config['client_url']}/repair/{repair.id}"
     )
     
     send_sms(user.phone, message)

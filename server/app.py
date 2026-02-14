@@ -81,11 +81,10 @@ def seed_repairs_department():
 
 
 def create_app():
-    # Configure Flask with static folder for serving React build
+    # Disable Flask's built-in static handler; the catch-all route serves React build files
     app = Flask(
         __name__,
-        static_folder=STATIC_FOLDER,
-        static_url_path=''
+        static_folder=None,
     )
 
     # Fix Heroku's postgres:// URL scheme (SQLAlchemy 1.4+ requires postgresql://)
@@ -135,11 +134,11 @@ def create_app():
     @app.route('/')
     @app.route('/<path:path>')
     def serve_react(path=''):
-        # If the path exists as a file in the static folder, serve it
-        if path and os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
+        # If the path exists as a file in the build folder, serve it (JS, CSS, images, etc.)
+        if path and os.path.exists(os.path.join(STATIC_FOLDER, path)):
+            return send_from_directory(STATIC_FOLDER, path)
         # Otherwise, serve index.html for client-side routing
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(STATIC_FOLDER, 'index.html')
 
     with app.app_context():
         db.create_all()
