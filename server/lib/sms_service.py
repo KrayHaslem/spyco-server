@@ -202,7 +202,8 @@ def notify_order_pending(order, approvers: list, submitter_name: str):
         approvers: List of Approver objects
         submitter_name: Name of the user who submitted the order
     """
-    config = _get_config()
+    # TODO: Restore URL in message once ClickSend whitelists the domain
+    # config = _get_config()
     
     recipients = []
     for approver in approvers:
@@ -210,7 +211,8 @@ def notify_order_pending(order, approvers: list, submitter_name: str):
             phone = approver.user.phone
             message = (
                 f"New order {order.order_number} pending approval from {submitter_name}. "
-                f"{config['client_url']}/order/{order.id}"
+                f"Please log in to review."
+                # f"{config['client_url']}/order/{order.id}"
             )
             recipients.append({
                 "to": phone,
@@ -230,14 +232,16 @@ def notify_repair_pending(repair, approvers: list, submitter_name: str):
         approvers: List of Approver objects
         submitter_name: Name of the user who submitted the repair
     """
-    config = _get_config()
+    # TODO: Restore URL in message once ClickSend whitelists the domain
+    # config = _get_config()
     
     recipients = []
     for approver in approvers:
         if approver.user and approver.user.phone:
             message = (
                 f"New repair {repair.repair_number} pending approval from {submitter_name}. "
-                f"{config['client_url']}/repair/{repair.id}"
+                f"Please log in to review."
+                # f"{config['client_url']}/repair/{repair.id}"
             )
             recipients.append({
                 "to": approver.user.phone,
@@ -256,14 +260,15 @@ def notify_order_approved(order, admins: list):
         order: The Order object
         admins: List of User objects (admins)
     """
-    config = _get_config()
+    # TODO: Restore URL in message once ClickSend whitelists the domain
+    # config = _get_config()
     
     recipients = []
     for admin in admins:
         if admin.phone:
             message = (
-                f"Order {order.order_number} has been approved. "
-                f"{config['client_url']}/order/{order.id}"
+                f"Order {order.order_number} has been approved."
+                # f" {config['client_url']}/order/{order.id}"
             )
             recipients.append({
                 "to": admin.phone,
@@ -282,14 +287,15 @@ def notify_repair_approved(repair, technicians: list):
         repair: The Repair object
         technicians: List of Technician objects
     """
-    config = _get_config()
+    # TODO: Restore URL in message once ClickSend whitelists the domain
+    # config = _get_config()
     
     recipients = []
     for technician in technicians:
         if technician.user and technician.user.phone:
             message = (
-                f"Repair {repair.repair_number} approved and ready for completion. "
-                f"{config['client_url']}/repair/{repair.id}"
+                f"Repair {repair.repair_number} approved and ready for completion."
+                # f" {config['client_url']}/repair/{repair.id}"
             )
             recipients.append({
                 "to": technician.user.phone,
@@ -308,7 +314,8 @@ def notify_order_paid(order, user):
         order: The Order object
         user: The User who created the order
     """
-    config = _get_config()
+    # TODO: Restore URL in message once ClickSend whitelists the domain
+    # config = _get_config()
     
     if not user or not user.phone:
         return
@@ -318,8 +325,8 @@ def notify_order_paid(order, user):
     
     message = (
         f"Your order from {vendor_name} has been paid. "
-        f"PO#: {po_number}. "
-        f"{config['client_url']}/order/{order.id}"
+        f"PO#: {po_number}."
+        # f" {config['client_url']}/order/{order.id}"
     )
     
     send_sms(user.phone, message)
@@ -333,14 +340,15 @@ def notify_repair_completed(repair, user):
         repair: The Repair object
         user: The User who requested the repair
     """
-    config = _get_config()
+    # TODO: Restore URL in message once ClickSend whitelists the domain
+    # config = _get_config()
     
     if not user or not user.phone:
         return
     
     message = (
-        f"Your repair {repair.repair_number} has been marked complete. "
-        f"{config['client_url']}/repair/{repair.id}"
+        f"Your repair {repair.repair_number} has been marked complete."
+        # f" {config['client_url']}/repair/{repair.id}"
     )
     
     send_sms(user.phone, message)
